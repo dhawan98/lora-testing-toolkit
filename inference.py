@@ -5,7 +5,6 @@ from lora_loading_patch import load_lora_into_transformer
 from diffusers.pipelines.stable_diffusion.safety_checker import (
     StableDiffusionSafetyChecker
 )
-import subprocess
 import os
 import random
 import string
@@ -70,7 +69,7 @@ def download_lora_from_huggingface(repo_id: str):
 def generate_images(
     prompt: str,
     hf_lora: str,
-    output_folder: str = "gdrive:output",
+    output_folder: str = "output",
     width: int = 512,
     height: int = 512,
     guidance_scale: float = 7.5,
@@ -87,6 +86,9 @@ def generate_images(
         txt2img_pipe.load_lora_weights(lora_path, adapter_name="default_adapter", low_cpu_mem_usage=True)
         print(f"✅ LoRA weights successfully loaded with PEFT from {lora_path}")
 
+    # Ensure output folder exists
+    os.makedirs(output_folder, exist_ok=True)
+
     # Generate images
     output_paths = []
     for i in range(num_images):
@@ -98,31 +100,24 @@ def generate_images(
             num_inference_steps=num_inference_steps
         ).images[0]
 
-        # Save temporarily in /tmp
-        temp_path = f"/tmp/{generate_random_filename()}"
-        image.save(temp_path)
+        # Save image locally
+        local_path = os.path.join(output_folder, generate_random_filename())
+        image.save(local_path)
 
-        # Upload to Google Drive using rclone
-        remote_path = f"{output_folder}/{os.path.basename(temp_path)}"
-        subprocess.run(["rclone", "copy", temp_path, remote_path], check=True)
-
-        # Remove the local file to avoid storage on Hipergator
-        os.remove(temp_path)
-
-        output_paths.append(remote_path)
-        print(f"✅ Image saved to: {remote_path}")
+        output_paths.append(local_path)
+        print(f"✅ Image saved locally to: {local_path}")
 
     return output_paths
 
 # Example Usage
 if __name__ == "__main__":
-    prompt = "Aashish as superman flying above new york"
+    prompt = "Aashish as superman flying above New York"
 
     # Run inference
     generate_images(
         prompt=prompt,
         hf_lora="aashudhawan/lora_face_aashish",  # LoRA model directly from Hugging Face
-        output_folder="gdrive:output",  # Google Drive 'output' folder
+        output_folder="output",  # Local 'output' folder
         width=512,
         height=512,
         guidance_scale=7.5,
