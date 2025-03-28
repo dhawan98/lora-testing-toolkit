@@ -2,6 +2,8 @@
 
 A streamlined Python toolkit for generating customized images using Flux models integrated with LoRA adapters directly from Hugging Face. Ideal for rapid experimentation and evaluation of fine-tuned image generation.
 
+Note: MAKE SURE TO EDIT HF TOKEN, PROMPT AND LoRA NAMES     
+
 ## Features
 
 - **Automated LoRA Integration:** Seamlessly download and load `.safetensors` LoRA models from Hugging Face.
